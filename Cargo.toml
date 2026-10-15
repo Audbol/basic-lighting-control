@@ -1,0 +1,22 @@
+[package]
+name = "obey-lite"
+version = "0.1.0"
+edition = "2024"
+description = "A 192-channel DMX controller that works like a Chauvet Obey 40, with a stage visualizer and Art-Net output"
+
+[dependencies]
+eframe = { version = "0.37.0", default-features = false, features = ["glow", "default_fonts", "x11", "wayland", "accesskit", "clipboard"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+serialport = { version = "4.10.1", default-features = false, optional = true }
+cpal = { version = "0.18.2", optional = true }
+
+[features]
+default = ["enttec"]
+# ENTTEC DMX USB Pro output over a serial port.
+enttec = ["dep:serialport"]
+# Sound-active (music) mode from the default microphone. Needs ALSA headers on Linux.
+audio = ["dep:cpal"]
+
+[profile.release]
+opt-level = 3
