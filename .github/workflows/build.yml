@@ -2,7 +2,8 @@ name: Build
 
 # Builds Obey-Lite for Windows, macOS, Linux and Raspberry Pi on every push.
 # The packages are attached to each run as artifacts; pushing a tag like v0.1.0
-# also publishes them as a GitHub release.
+# also publishes them as a GitHub release. So does running the workflow by hand
+# with a release tag, which creates the tag on the commit it built.
 
 on:
   push:
@@ -10,6 +11,11 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      release:
+        description: "Publish a release with this tag (e.g. v0.1.0); leave empty to just build"
+        required: false
+        default: ""
 
 env:
   CARGO_TERM_COLOR: always
@@ -143,7 +149,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release != '')
     needs: [test, build, macos]
     runs-on: ubuntu-latest
     permissions:
@@ -155,5 +161,8 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.release || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          name: Obey-Lite ${{ inputs.release || github.ref_name }}
           files: dist/*
           generate_release_notes: true
