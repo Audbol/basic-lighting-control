@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Obey-Lite
+Comment=DMX lighting controller with stage visualizer
+Exec=obey-lite
+Terminal=false
+Categories=AudioVideo;Utility;

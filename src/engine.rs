@@ -785,7 +785,7 @@ mod tests {
         c.toggle_program();
         c.press_scene(1); // empty scene -> all zero
         c.tick(0.0);
-        c.set_fade(((2.0 / MAX_FADE_SECONDS) as f64).sqrt()); // 2 s fade
+        c.set_fade((2.0 / MAX_FADE_SECONDS).sqrt()); // 2 s fade
         c.tick(1.0);
         c.press_scene(0);
         assert_eq!(c.tick(2.0)[0], 100, "halfway through the fade");

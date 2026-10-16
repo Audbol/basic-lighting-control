@@ -57,9 +57,30 @@ Both can run at once. Output runs on its own thread, so chases keep running when
 
 ## Shows
 
-Scenes, chases, speed/fade and the patch are saved as JSON to the show file (default `default.show.json` in the working directory, or pass a path: `obey-lite myshow.show.json`). Changes are autosaved; **Save** / **Load** / **New** are in the top bar. On first run a demo show is loaded: six looks in bank 1, a colour chase on chase 1 and a mover sweep on chase 2.
+Scenes, chases, speed/fade and the patch are saved as JSON to the show file (by default `default.show.json` in your user data folder, see Download; or pass a path: `obey-lite myshow.show.json`). Changes are autosaved; **Save** / **Load** / **New** are in the top bar. On first run a demo show is loaded: six looks in bank 1, a colour chase on chase 1 and a mover sweep on chase 2.
 
-## Build and run
+## Download
+
+Every push is built by GitHub Actions ([Build workflow](../../actions/workflows/build.yml)); open a run and download the package for your system from **Artifacts**. Tagged versions (`v*`) are also published under [Releases](../../releases).
+
+| Package | For |
+|---|---|
+| `obey-lite-windows-x86_64.zip` | Windows 10/11 (Intel/AMD) |
+| `obey-lite-windows-arm64.zip` | Windows on ARM |
+| `obey-lite-macos-universal.zip` | macOS 11+, Apple silicon and Intel |
+| `obey-lite-linux-x86_64.tar.gz` | Linux PCs |
+| `obey-lite-raspberry-pi-arm64.tar.gz` | Raspberry Pi OS 64-bit (Pi 3, 4, 5, Zero 2 W) |
+| `obey-lite-raspberry-pi-armhf.tar.gz` | Raspberry Pi OS 32-bit (Pi 2, 3, 4) |
+
+All builds include the microphone (music mode).
+
+* **Windows**: unzip and run `obey-lite.exe`. SmartScreen may warn because the exe isn't signed: *More info → Run anyway*.
+* **macOS**: unzip and move `Obey-Lite.app` to Applications. The app isn't notarized, so the first time right-click it → *Open* (or run `xattr -dr com.apple.quarantine /Applications/Obey-Lite.app`).
+* **Linux / Raspberry Pi**: `tar xzf obey-lite-*.tar.gz`, then run `./obey-lite` in the folder, or `./install.sh` to install it to `~/.local/bin` with a menu entry. Needs a desktop session and `libasound2` (present on Raspberry Pi OS Desktop). A Pi 4 or 5 is recommended for a smooth visualizer.
+
+Without a path argument the show is kept in your user data folder: `%APPDATA%\Obey-Lite` (Windows), `~/Library/Application Support/Obey-Lite` (macOS), `~/.local/share/obey-lite` (Linux).
+
+## Build from source
 
 Needs a stable Rust toolchain (edition 2024).
 

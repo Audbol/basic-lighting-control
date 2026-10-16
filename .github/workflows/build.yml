@@ -1,0 +1,159 @@
+name: Build
+
+# Builds Obey-Lite for Windows, macOS, Linux and Raspberry Pi on every push.
+# The packages are attached to each run as artifacts; pushing a tag like v0.1.0
+# also publishes them as a GitHub release.
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev pkg-config
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets --features audio -- -D warnings
+      - run: cargo test --features audio
+
+  build:
+    name: build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          # 64-bit Raspberry Pi OS (Pi 3, 4, 5, Zero 2 W), built natively on ARM.
+          - name: raspberry-pi-arm64
+            os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+          # 32-bit Raspberry Pi OS (Pi 2, 3, 4), cross-compiled.
+          - name: raspberry-pi-armhf
+            os: ubuntu-22.04
+            target: armv7-unknown-linux-gnueabihf
+            cross: true
+          - name: windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - name: windows-arm64
+            os: windows-latest
+            target: aarch64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Linux build dependencies
+        if: runner.os == 'Linux' && !matrix.cross
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev pkg-config
+      - name: Install cross
+        if: matrix.cross
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cross
+
+      - name: Build
+        shell: bash
+        run: |
+          if [ "${{ matrix.cross }}" = "true" ]; then
+            cross build --release --features audio --target ${{ matrix.target }}
+          else
+            cargo build --release --features audio --target ${{ matrix.target }}
+          fi
+
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          dir=obey-lite-${{ matrix.name }}
+          mkdir "$dir"
+          cp target/${{ matrix.target }}/release/obey-lite README.md \
+             packaging/linux/obey-lite.desktop packaging/linux/install.sh "$dir"/
+          tar czf "$dir.tar.gz" "$dir"
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $dir = "obey-lite-${{ matrix.name }}"
+          New-Item -ItemType Directory $dir | Out-Null
+          Copy-Item target/${{ matrix.target }}/release/obey-lite.exe, README.md $dir
+          Compress-Archive -Path $dir -DestinationPath "$dir.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: obey-lite-${{ matrix.name }}
+          path: |
+            obey-lite-${{ matrix.name }}.tar.gz
+            obey-lite-${{ matrix.name }}.zip
+          if-no-files-found: error
+
+  macos:
+    name: build (macos-universal)
+    runs-on: macos-latest
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+      - name: Build Apple silicon and Intel
+        run: |
+          cargo build --release --features audio --target aarch64-apple-darwin
+          cargo build --release --features audio --target x86_64-apple-darwin
+      - name: Universal app bundle
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          app=Obey-Lite.app
+          mkdir -p "$app/Contents/MacOS"
+          lipo -create -output "$app/Contents/MacOS/obey-lite" \
+            target/aarch64-apple-darwin/release/obey-lite \
+            target/x86_64-apple-darwin/release/obey-lite
+          sed "s/@VERSION@/$version/g" packaging/macos/Info.plist > "$app/Contents/Info.plist"
+          # Ad-hoc signature: required on Apple silicon, and binds the Info.plist
+          # (microphone prompt) to the app. Not notarized.
+          codesign --force --deep --sign - "$app"
+          mkdir obey-lite-macos-universal
+          mv "$app" obey-lite-macos-universal/
+          cp README.md obey-lite-macos-universal/
+          ditto -c -k --keepParent obey-lite-macos-universal obey-lite-macos-universal.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: obey-lite-macos-universal
+          path: obey-lite-macos-universal.zip
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, build, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

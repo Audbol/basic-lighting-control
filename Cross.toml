@@ -1,0 +1,7 @@
+# 32-bit Raspberry Pi OS builds use `cross`; the microphone feature needs the
+# target's ALSA headers inside the build image.
+[target.armv7-unknown-linux-gnueabihf]
+pre-build = [
+    "dpkg --add-architecture $CROSS_DEB_ARCH",
+    "apt-get update && apt-get install --assume-yes libasound2-dev:$CROSS_DEB_ARCH",
+]
