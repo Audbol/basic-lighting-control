@@ -19,7 +19,9 @@ mod engine;
 mod enttec;
 mod fixtures;
 mod output;
+mod theme;
 mod visualizer;
+mod widgets;
 
 use std::path::PathBuf;
 
@@ -30,9 +32,10 @@ fn main() -> eframe::Result {
         .unwrap_or_else(default_show_path);
     let options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default()
-            .with_title("Obey-Lite DMX Controller")
-            .with_inner_size([1500.0, 920.0])
-            .with_min_inner_size([1100.0, 700.0]),
+            .with_title("Obey-Lite")
+            .with_icon(theme::icon())
+            .with_inner_size([1640.0, 1000.0])
+            .with_min_inner_size([1200.0, 760.0]),
         ..Default::default()
     };
     eframe::run_native(

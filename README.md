@@ -31,13 +31,15 @@ A desktop DMX lighting controller, written in Rust, that works like a **Chauvet 
 * **MUSIC/BANK COPY** steps on the beat (microphone, or the Space bar).
 * **FADE** sets the crossfade time. **BLACKOUT** kills the output.
 
+Faders: drag the cap, click the track to jump, scroll for single DMX steps (Shift for ten), double-click to snap to full or zero. When a scene recalls, the faders glide to their new positions like motorised faders.
+
 Keyboard: `1`-`8` scenes · `Up`/`Down` bank · `T` tap · `B` blackout · `Space` beat.
 
 On the hardware some functions need two buttons held at once (AUTO/DEL + scene). With a mouse, press them one after the other; the button's LED shows it's armed.
 
 ## Visualizer and patch
 
-The stage view shows the 12 scanner slots on a truss, with beams through haze and pools on the floor. Moving heads follow pan/tilt, strobes flash at the strobe-channel rate, and you can click a fixture to select it. The **Patch** panel sets each slot's fixture type:
+The stage view shows the 12 scanner slots on a box truss, with soft beams through drifting haze, pools and spill on the floor, and light on the back wall. Moving heads turn to follow pan/tilt, strobes flash at the strobe-channel rate, hovering a fixture shows its address and live values, and clicking it selects it. The **Patch** panel sets each slot's fixture type:
 
 * Dimmer (1ch) · RGB Par (3ch) · RGB Par (7ch: dim R G B strobe macro speed)
 * RGBW Par (8ch: dim R G B W strobe macro speed)
@@ -97,7 +99,8 @@ On Linux, `--features audio` needs the ALSA headers (`libasound2-dev` / `alsa-li
 | File | |
 |---|---|
 | `src/engine.rs` | The Obey 40 logic: modes, banks, scenes, chases, fades, tap. No GUI or I/O, unit tested |
-| `src/app.rs` | Front panel, patch, output settings, show files |
+| `src/app.rs` | Window layout: status bar, stage, side tabs, front panel |
+| `src/widgets.rs`, `src/theme.rs` | Panel keys, faders, 7-segment display; colours and style |
 | `src/visualizer.rs` | Stage rendering |
 | `src/fixtures.rs` | Fixture profiles |
 | `src/output.rs` | 40 Hz DMX thread |

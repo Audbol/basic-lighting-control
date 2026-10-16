@@ -84,6 +84,19 @@ impl Profile {
         }
     }
 
+    /// Short tag for the scanner buttons.
+    pub fn short(self) -> &'static str {
+        match self {
+            Profile::Empty => "—",
+            Profile::Dimmer => "DIM",
+            Profile::Rgb3 | Profile::Rgb7 => "RGB",
+            Profile::Rgbw8 => "RGBW",
+            Profile::MovingHead => "MOVER",
+            Profile::Strobe => "STROBE",
+            Profile::Generic => "GEN",
+        }
+    }
+
     pub fn kind(self) -> Kind {
         match self {
             Profile::Empty => Kind::None,
